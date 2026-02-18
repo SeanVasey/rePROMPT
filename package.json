@@ -1,0 +1,20 @@
+{
+    "name": "reprompt",
+    "version": "1.0.0",
+    "description": "rePROMPT — AI-powered prompt enhancement by VASEY/AI. Enhance, rewrite, and analyze prompts for better LLM results.",
+    "author": "VASEY/AI",
+    "license": "Apache-2.0",
+    "private": true,
+    "homepage": "https://seanvasey.github.io/rePROMPT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/SeanVasey/rePROMPT.git"
+    },
+    "keywords": [
+        "prompt-engineering",
+        "ai",
+        "claude",
+        "pwa",
+        "vasey-ai"
+    ]
+}
