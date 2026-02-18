@@ -18,7 +18,6 @@ jobs:
           echo "Checking HTML files..."
           for f in $(find . -name '*.html' -not -path './node_modules/*'); do
             echo "  Validating: $f"
-            # Check for unclosed tags, missing doctype
             if ! head -1 "$f" | grep -qi '<!doctype'; then
               echo "    WARNING: Missing <!DOCTYPE> in $f"
             fi
@@ -36,7 +35,6 @@ jobs:
           echo "Checking CSS files..."
           for f in $(find . -name '*.css' -not -path './node_modules/*'); do
             echo "  Validating: $f"
-            # Check for balanced braces
             OPEN=$(grep -o '{' "$f" | wc -l)
             CLOSE=$(grep -o '}' "$f" | wc -l)
             if [ "$OPEN" -ne "$CLOSE" ]; then
@@ -89,11 +87,11 @@ jobs:
       - name: Check manifest and icons
         run: |
           echo "Checking PWA manifest..."
-          python3 -m json.tool manifest.json > /dev/null
+          python3 -m json.tool public/manifest.json > /dev/null
           echo "  manifest.json: OK"
 
           echo "Checking icon files..."
-          for icon in icons/icon.svg icons/icon-192.png icons/icon-512.png; do
+          for icon in public/icons/icon.svg public/icons/icon-192.png public/icons/icon-512.png; do
             if [ -f "$icon" ]; then
               SIZE=$(stat -c%s "$icon" 2>/dev/null || stat -f%z "$icon" 2>/dev/null)
               echo "  $icon: OK ($SIZE bytes)"
@@ -104,9 +102,33 @@ jobs:
           done
 
           echo "Checking service worker..."
-          if [ -f "sw.js" ]; then
+          if [ -f "public/sw.js" ]; then
             echo "  sw.js: OK"
           else
-            echo "  ERROR: Missing sw.js"
+            echo "  ERROR: Missing public/sw.js"
             exit 1
           fi
+
+  validate-server:
+    name: Validate Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check server syntax
+        run: |
+          echo "Checking server.js..."
+          node --check server.js
+          echo "  server.js: OK"
+
+      - name: Check package.json is valid
+        run: |
+          python3 -m json.tool package.json > /dev/null
+          echo "  package.json: OK"
+
+      - name: Verify npm install succeeds
+        run: npm install --ignore-scripts

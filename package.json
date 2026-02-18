@@ -1,10 +1,21 @@
 {
     "name": "reprompt",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "rePROMPT — AI-powered prompt enhancement by VASEY/AI. Enhance, rewrite, and analyze prompts for better LLM results.",
     "author": "VASEY/AI",
     "license": "Apache-2.0",
     "private": true,
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "node server.js"
+    },
+    "dependencies": {
+        "express": "^4.21.0"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    },
     "homepage": "https://seanvasey.github.io/rePROMPT",
     "repository": {
         "type": "git",
