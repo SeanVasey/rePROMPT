@@ -1,0 +1,134 @@
+name: CI — Lint & Validate
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  lint-html:
+    name: Validate HTML
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate HTML structure
+        run: |
+          echo "Checking HTML files..."
+          for f in $(find . -name '*.html' -not -path './node_modules/*'); do
+            echo "  Validating: $f"
+            if ! head -1 "$f" | grep -qi '<!doctype'; then
+              echo "    WARNING: Missing <!DOCTYPE> in $f"
+            fi
+            echo "    OK"
+          done
+
+  lint-css:
+    name: Validate CSS
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check CSS syntax
+        run: |
+          echo "Checking CSS files..."
+          for f in $(find . -name '*.css' -not -path './node_modules/*'); do
+            echo "  Validating: $f"
+            OPEN=$(grep -o '{' "$f" | wc -l)
+            CLOSE=$(grep -o '}' "$f" | wc -l)
+            if [ "$OPEN" -ne "$CLOSE" ]; then
+              echo "    ERROR: Unbalanced braces in $f (open: $OPEN, close: $CLOSE)"
+              exit 1
+            fi
+            echo "    OK (braces balanced: $OPEN)"
+          done
+
+  lint-js:
+    name: Validate JavaScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check JS syntax
+        run: |
+          echo "Checking JavaScript files..."
+          for f in $(find . -name '*.js' -not -path './node_modules/*'); do
+            echo "  Parsing: $f"
+            node --check "$f"
+            echo "    OK"
+          done
+
+  validate-json:
+    name: Validate JSON
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check JSON files
+        run: |
+          echo "Checking JSON files..."
+          for f in $(find . -name '*.json' -not -path './node_modules/*'); do
+            echo "  Validating: $f"
+            python3 -m json.tool "$f" > /dev/null
+            echo "    OK"
+          done
+
+  validate-pwa:
+    name: Validate PWA Assets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check manifest and icons
+        run: |
+          echo "Checking PWA manifest..."
+          python3 -m json.tool public/manifest.json > /dev/null
+          echo "  manifest.json: OK"
+
+          echo "Checking icon files..."
+          for icon in public/icons/icon.svg public/icons/icon-192.png public/icons/icon-512.png; do
+            if [ -f "$icon" ]; then
+              SIZE=$(stat -c%s "$icon" 2>/dev/null || stat -f%z "$icon" 2>/dev/null)
+              echo "  $icon: OK ($SIZE bytes)"
+            else
+              echo "  ERROR: Missing $icon"
+              exit 1
+            fi
+          done
+
+          echo "Checking service worker..."
+          if [ -f "public/sw.js" ]; then
+            echo "  sw.js: OK"
+          else
+            echo "  ERROR: Missing public/sw.js"
+            exit 1
+          fi
+
+  validate-server:
+    name: Validate Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check server syntax
+        run: |
+          echo "Checking server.js..."
+          node --check server.js
+          echo "  server.js: OK"
+
+      - name: Check package.json is valid
+        run: |
+          python3 -m json.tool package.json > /dev/null
+          echo "  package.json: OK"
+
+      - name: Verify npm install succeeds
+        run: npm install --ignore-scripts

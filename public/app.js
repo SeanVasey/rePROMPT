@@ -1,6 +1,7 @@
 /* =========================================
    rePROMPT — VASEY/AI
    Prompt enhancement powered by Claude API
+   (backend proxy — no API keys in browser)
    ========================================= */
 
 (function () {
@@ -11,6 +12,7 @@
         mode: 'enhance',
         images: [],        // { file, dataUrl, base64, mediaType }
         processing: false,
+        backendReady: false,
     };
 
     // ── DOM refs ───────────────────────────
@@ -33,10 +35,9 @@
     const settingsBtn    = $('#settingsBtn');
     const settingsModal  = $('#settingsModal');
     const settingsClose  = $('#settingsClose');
-    const apiKeyInput    = $('#apiKeyInput');
     const modelSelect    = $('#modelSelect');
-    const toggleKeyVis   = $('#toggleKeyVis');
     const saveSettingsBtn = $('#saveSettingsBtn');
+    const backendStatus  = $('#backendStatus');
     const uploadBtn      = $('#uploadBtn');
     const imageInput     = $('#imageInput');
     const imagePreviewContainer = $('#imagePreviewContainer');
@@ -46,18 +47,40 @@
         loadSettings();
         bindEvents();
         updateCharCount();
+        checkBackend();
+    }
+
+    // ── Backend health check ─────────────
+    async function checkBackend() {
+        try {
+            const res = await fetch('/api/health');
+            const data = await res.json();
+            state.backendReady = data.configured;
+            if (backendStatus) {
+                if (data.configured) {
+                    backendStatus.textContent = 'Connected — API key configured on server';
+                    backendStatus.className = 'backend-status backend-ok';
+                } else {
+                    backendStatus.textContent = 'Server running but ANTHROPIC_API_KEY is not set';
+                    backendStatus.className = 'backend-status backend-warn';
+                }
+            }
+        } catch {
+            state.backendReady = false;
+            if (backendStatus) {
+                backendStatus.textContent = 'Cannot reach backend server';
+                backendStatus.className = 'backend-status backend-error';
+            }
+        }
     }
 
     // ── Settings persistence ───────────────
     function loadSettings() {
-        const key = localStorage.getItem('reprompt_api_key') || '';
         const model = localStorage.getItem('reprompt_model') || 'claude-sonnet-4-5-20250929';
-        apiKeyInput.value = key;
         modelSelect.value = model;
     }
 
     function saveSettings() {
-        localStorage.setItem('reprompt_api_key', apiKeyInput.value.trim());
         localStorage.setItem('reprompt_model', modelSelect.value);
     }
 
@@ -92,13 +115,13 @@
         rerunBtn.addEventListener('click', handleEnhance);
 
         // Settings
-        settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+        settingsBtn.addEventListener('click', () => {
+            checkBackend();
+            settingsModal.classList.remove('hidden');
+        });
         settingsClose.addEventListener('click', () => settingsModal.classList.add('hidden'));
         settingsModal.addEventListener('click', (e) => {
             if (e.target === settingsModal) settingsModal.classList.add('hidden');
-        });
-        toggleKeyVis.addEventListener('click', () => {
-            apiKeyInput.type = apiKeyInput.type === 'password' ? 'text' : 'password';
         });
         saveSettingsBtn.addEventListener('click', () => {
             saveSettings();
@@ -219,13 +242,8 @@ Format your analysis clearly with sections and the improved prompt at the end.`,
         return modes[mode] || modes.enhance;
     }
 
-    // ── API call ───────────────────────────
+    // ── API call (via backend proxy) ──────
     async function callClaude(prompt, context, images, mode) {
-        const apiKey = localStorage.getItem('reprompt_api_key');
-        if (!apiKey) {
-            throw new Error('API_KEY_MISSING');
-        }
-
         const model = localStorage.getItem('reprompt_model') || 'claude-sonnet-4-5-20250929';
         const system = getSystemPrompt(mode);
 
@@ -258,20 +276,15 @@ Format your analysis clearly with sections and the improved prompt at the end.`,
             messages: [{ role: 'user', content }],
         };
 
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
+        const response = await fetch('/api/messages', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': apiKey,
-                'anthropic-version': '2023-06-01',
-                'anthropic-dangerous-direct-browser-access': 'true',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
         });
 
         if (!response.ok) {
             const err = await response.json().catch(() => ({}));
-            throw new Error(err?.error?.message || `API error ${response.status}`);
+            throw new Error(err?.error?.message || `Server error ${response.status}`);
         }
 
         const data = await response.json();
@@ -286,9 +299,9 @@ Format your analysis clearly with sections and the improved prompt at the end.`,
             return;
         }
 
-        if (!localStorage.getItem('reprompt_api_key')) {
+        if (!state.backendReady) {
             settingsModal.classList.remove('hidden');
-            apiKeyInput.focus();
+            checkBackend();
             return;
         }
 
@@ -302,13 +315,8 @@ Format your analysis clearly with sections and the improved prompt at the end.`,
             outputSection.classList.remove('hidden');
             outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } catch (err) {
-            if (err.message === 'API_KEY_MISSING') {
-                settingsModal.classList.remove('hidden');
-                apiKeyInput.focus();
-            } else {
-                outputContent.textContent = `Error: ${err.message}`;
-                outputSection.classList.remove('hidden');
-            }
+            outputContent.textContent = `Error: ${err.message}`;
+            outputSection.classList.remove('hidden');
         } finally {
             setProcessing(false);
         }

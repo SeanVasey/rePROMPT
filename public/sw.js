@@ -2,7 +2,7 @@
    rePROMPT — Service Worker (PWA)
    ========================================= */
 
-const CACHE_NAME = 'reprompt-v1';
+const CACHE_NAME = 'reprompt-v2';
 const ASSETS = [
     '/',
     '/index.html',
@@ -36,8 +36,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
-    // Never cache API calls
-    if (url.hostname === 'api.anthropic.com') {
+    // Never cache API calls (backend proxy)
+    if (url.pathname.startsWith('/api/')) {
         return;
     }
 
