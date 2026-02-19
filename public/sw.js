@@ -2,14 +2,20 @@
    rePROMPT — Service Worker (PWA)
    ========================================= */
 
-const CACHE_NAME = 'reprompt-v2';
+const CACHE_NAME = 'reprompt-v3';
+
+// Derive base path from the service worker's own URL so cached asset
+// paths are correct regardless of whether the app is served from the
+// domain root (local dev) or a subpath like /rePROMPT/ (GitHub Pages).
+const SW_BASE = new URL('./', self.location).pathname;
+
 const ASSETS = [
-    '/',
-    '/index.html',
-    '/styles.css',
-    '/app.js',
-    '/manifest.json',
-    '/icons/icon.svg',
+    SW_BASE,
+    `${SW_BASE}index.html`,
+    `${SW_BASE}styles.css`,
+    `${SW_BASE}app.js`,
+    `${SW_BASE}manifest.json`,
+    `${SW_BASE}icons/icon.svg`,
 ];
 
 // Install — cache shell assets
@@ -37,7 +43,7 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
     // Never cache API calls (backend proxy)
-    if (url.pathname.startsWith('/api/')) {
+    if (url.pathname.includes('/api/')) {
         return;
     }
 
