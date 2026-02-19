@@ -57,10 +57,11 @@ app.get('/api/health', (_req, res) => {
 
 // ── Proxy: Anthropic Messages API ────────
 app.post('/api/messages', async (req, res) => {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const clientKey = req.headers['x-client-api-key'];
+    const apiKey = process.env.ANTHROPIC_API_KEY || clientKey;
     if (!apiKey) {
         return res.status(500).json({
-            error: { message: 'Server is not configured. Set the ANTHROPIC_API_KEY environment variable.' },
+            error: { message: 'Server is not configured. Set the ANTHROPIC_API_KEY environment variable or provide a client API key.' },
         });
     }
 

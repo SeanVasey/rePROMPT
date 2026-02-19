@@ -323,48 +323,27 @@ Format your analysis clearly with sections and the improved prompt at the end.`,
             messages: [{ role: 'user', content }],
         };
 
-        // Direct browser mode — call Anthropic API without a backend proxy
+        // Build request headers
+        const headers = { 'Content-Type': 'application/json' };
+
+        // When in direct mode, pass the client-side API key through the proxy
         if (state.directMode) {
-            return callAnthropicDirect(body);
+            const apiKey = localStorage.getItem('reprompt_api_key');
+            if (!apiKey) {
+                throw new Error('No API key configured. Open Settings and enter your Anthropic API key.');
+            }
+            headers['X-Client-API-Key'] = apiKey;
         }
 
-        // Backend proxy mode
         const response = await fetch(apiUrl('/api/messages'), {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify(body),
         });
 
         if (!response.ok) {
             const err = await response.json().catch(() => ({}));
             throw new Error(err?.error?.message || `Server error ${response.status}`);
-        }
-
-        const data = await response.json();
-        return data.content?.[0]?.text || '';
-    }
-
-    // ── Direct Anthropic API call (browser → api.anthropic.com) ──
-    async function callAnthropicDirect(body) {
-        const apiKey = localStorage.getItem('reprompt_api_key');
-        if (!apiKey) {
-            throw new Error('No API key configured. Open Settings and enter your Anthropic API key.');
-        }
-
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': apiKey,
-                'anthropic-version': '2023-06-01',
-                'anthropic-dangerous-direct-browser-access': 'true',
-            },
-            body: JSON.stringify(body),
-        });
-
-        if (!response.ok) {
-            const err = await response.json().catch(() => ({}));
-            throw new Error(err?.error?.message || `Anthropic API error ${response.status}`);
         }
 
         const data = await response.json();
