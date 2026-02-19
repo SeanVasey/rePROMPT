@@ -5,14 +5,48 @@
 
 'use strict';
 
-const express = require('express');
+const fs = require('fs');
 const path = require('path');
+const express = require('express');
+
+loadLocalEnv();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const MAX_TOKENS_LIMIT = 8192;
+
+function loadLocalEnv() {
+    const envPath = path.join(__dirname, '.env');
+    if (!fs.existsSync(envPath)) return;
+
+    const lines = fs.readFileSync(envPath, 'utf8').split(/\r?\n/);
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        const delimiter = trimmed.indexOf('=');
+        if (delimiter === -1) continue;
+
+        const key = trimmed.slice(0, delimiter).trim();
+        let value = trimmed.slice(delimiter + 1).trim();
+
+        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+            value = value.slice(1, -1);
+        }
+
+        if (!(key in process.env)) {
+            process.env[key] = value;
+        }
+    }
+}
 
 // ── Middleware ────────────────────────────
+app.disable('x-powered-by');
 app.use(express.json({ limit: '20mb' }));
+app.use((_, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    next();
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ── Health check ─────────────────────────
@@ -32,11 +66,15 @@ app.post('/api/messages', async (req, res) => {
 
     const { model, max_tokens, system, messages } = req.body;
 
-    if (!model || !messages) {
+    if (!model || !Array.isArray(messages) || messages.length === 0) {
         return res.status(400).json({
-            error: { message: 'Missing required fields: model, messages' },
+            error: { message: 'Missing required fields: model, messages[]' },
         });
     }
+
+    const safeMaxTokens = Number.isInteger(max_tokens) && max_tokens > 0 && max_tokens <= MAX_TOKENS_LIMIT
+        ? max_tokens
+        : 1400;
 
     try {
         const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -46,7 +84,7 @@ app.post('/api/messages', async (req, res) => {
                 'x-api-key': apiKey,
                 'anthropic-version': '2023-06-01',
             },
-            body: JSON.stringify({ model, max_tokens, system, messages }),
+            body: JSON.stringify({ model, max_tokens: safeMaxTokens, system, messages }),
         });
 
         const data = await response.json();
@@ -56,7 +94,7 @@ app.post('/api/messages', async (req, res) => {
         }
 
         res.json(data);
-    } catch (err) {
+    } catch (_err) {
         res.status(502).json({
             error: { message: 'Failed to reach Anthropic API. Check your network and API key.' },
         });

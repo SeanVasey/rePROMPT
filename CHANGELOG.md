@@ -4,6 +4,23 @@ All notable changes to **rePROMPT** will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] — 2026-02-19
+
+### Added
+
+- Added repository baseline and governance docs: `.editorconfig`, `SECURITY.md`, and `docs/MANIFEST.md`.
+- Added `scripts/validate.js` smoke validation for syntax, required files, and secret-safety checks.
+- Added frontend runtime config file `public/config.js` to support separate frontend/backend origins.
+
+### Changed
+
+- Hardened backend (`server.js`) with local `.env` loading, safer response headers, request validation, and token clamping.
+- Updated frontend (`public/app.js`) to use configurable API base URL via `window.__REPROMPT_CONFIG__`.
+- Updated `public/index.html` to load `config.js` before app bootstrapping.
+- Reworked CI workflow to run centralized validation and prevent committed Anthropic key patterns.
+- Reworked GitHub Pages deploy workflow to inject backend base URL from repository variable `REPROMPT_API_BASE_URL`.
+- Updated docs and environment template for secure deployment guidance and configuration.
+
 ## [1.1.0] — 2026-02-18
 
 ### Changed
