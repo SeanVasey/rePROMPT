@@ -2,7 +2,7 @@
     "name": "rePROMPT — VASEY/AI",
     "short_name": "rePROMPT",
     "description": "AI-powered prompt enhancement by VASEY/AI",
-    "start_url": "/",
+    "start_url": "./",
     "display": "standalone",
     "background_color": "#1A1A2E",
     "theme_color": "#1A1A2E",
