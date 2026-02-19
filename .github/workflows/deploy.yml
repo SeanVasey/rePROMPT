@@ -16,16 +16,21 @@ concurrency:
 
 jobs:
   build:
-    name: Build
+    name: Build static frontend
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Stamp version
+      - name: Configure API base URL for static deployment
+        env:
+          API_BASE_URL: ${{ vars.REPROMPT_API_BASE_URL }}
         run: |
-          VERSION=$(cat VERSION 2>/dev/null || echo "0.0.0")
-          echo "Building rePROMPT v${VERSION}"
-          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
+          mkdir -p public
+          cat > public/config.js <<CFG
+          window.__REPROMPT_CONFIG__ = {
+            apiBaseUrl: "${API_BASE_URL}"
+          };
+          CFG
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -33,7 +38,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'public'
+          path: public
 
   deploy:
     name: Deploy

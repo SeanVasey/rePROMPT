@@ -42,6 +42,14 @@
     const imageInput     = $('#imageInput');
     const imagePreviewContainer = $('#imagePreviewContainer');
 
+    const apiBase = (window.__REPROMPT_CONFIG__ && window.__REPROMPT_CONFIG__.apiBaseUrl)
+        ? window.__REPROMPT_CONFIG__.apiBaseUrl.replace(/\/$/, '')
+        : '';
+
+    function apiUrl(path) {
+        return `${apiBase}${path}`;
+    }
+
     // ── Init ───────────────────────────────
     function init() {
         loadSettings();
@@ -53,7 +61,7 @@
     // ── Backend health check ─────────────
     async function checkBackend() {
         try {
-            const res = await fetch('/api/health');
+            const res = await fetch(apiUrl('/api/health'));
             const data = await res.json();
             state.backendReady = data.configured;
             if (backendStatus) {
@@ -276,7 +284,7 @@ Format your analysis clearly with sections and the improved prompt at the end.`,
             messages: [{ role: 'user', content }],
         };
 
-        const response = await fetch('/api/messages', {
+        const response = await fetch(apiUrl('/api/messages'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
