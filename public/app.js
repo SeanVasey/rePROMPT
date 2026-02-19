@@ -13,6 +13,7 @@
         images: [],        // { file, dataUrl, base64, mediaType }
         processing: false,
         backendReady: false,
+        directMode: false, // true when using client-side API key
     };
 
     // ── DOM refs ───────────────────────────
@@ -38,6 +39,9 @@
     const modelSelect    = $('#modelSelect');
     const saveSettingsBtn = $('#saveSettingsBtn');
     const backendStatus  = $('#backendStatus');
+    const backendHint    = $('#backendHint');
+    const apiKeyGroup    = $('#apiKeyGroup');
+    const apiKeyInput    = $('#apiKeyInput');
     const uploadBtn      = $('#uploadBtn');
     const imageInput     = $('#imageInput');
     const imagePreviewContainer = $('#imagePreviewContainer');
@@ -64,21 +68,43 @@
             const res = await fetch(apiUrl('/api/health'));
             const data = await res.json();
             state.backendReady = data.configured;
+            state.directMode = false;
             if (backendStatus) {
                 if (data.configured) {
                     backendStatus.textContent = 'Connected — API key configured on server';
                     backendStatus.className = 'backend-status backend-ok';
+                    backendHint.textContent = 'The API key is stored securely on the server.';
                 } else {
                     backendStatus.textContent = 'Server running but ANTHROPIC_API_KEY is not set';
                     backendStatus.className = 'backend-status backend-warn';
                 }
             }
+            if (apiKeyGroup) apiKeyGroup.style.display = data.configured ? 'none' : '';
         } catch {
             state.backendReady = false;
-            if (backendStatus) {
-                backendStatus.textContent = 'Cannot reach backend server';
-                backendStatus.className = 'backend-status backend-error';
+            enableDirectMode();
+        }
+    }
+
+    // ── Direct-mode (no backend proxy) ────
+    function enableDirectMode() {
+        state.directMode = true;
+        const savedKey = localStorage.getItem('reprompt_api_key') || '';
+        state.backendReady = savedKey.length > 0;
+
+        if (backendStatus) {
+            if (savedKey) {
+                backendStatus.textContent = 'Using your API key (direct browser mode)';
+                backendStatus.className = 'backend-status backend-ok';
+            } else {
+                backendStatus.textContent = 'No backend server — enter your Anthropic API key below';
+                backendStatus.className = 'backend-status backend-warn';
             }
+            backendHint.textContent = 'No backend proxy detected. You can use the app by providing your own API key.';
+        }
+        if (apiKeyGroup) {
+            apiKeyGroup.style.display = '';
+            if (apiKeyInput) apiKeyInput.value = savedKey;
         }
     }
 
@@ -90,6 +116,19 @@
 
     function saveSettings() {
         localStorage.setItem('reprompt_model', modelSelect.value);
+
+        // Persist client-side API key when in direct mode
+        if (state.directMode && apiKeyInput) {
+            const key = apiKeyInput.value.trim();
+            if (key) {
+                localStorage.setItem('reprompt_api_key', key);
+            } else {
+                localStorage.removeItem('reprompt_api_key');
+            }
+            // Re-evaluate readiness
+            state.backendReady = key.length > 0;
+            enableDirectMode();
+        }
     }
 
     // ── Event wiring ───────────────────────
@@ -250,7 +289,7 @@ Format your analysis clearly with sections and the improved prompt at the end.`,
         return modes[mode] || modes.enhance;
     }
 
-    // ── API call (via backend proxy) ──────
+    // ── API call ─────────────────────────
     async function callClaude(prompt, context, images, mode) {
         const model = localStorage.getItem('reprompt_model') || 'claude-sonnet-4-5-20250929';
         const system = getSystemPrompt(mode);
@@ -284,6 +323,12 @@ Format your analysis clearly with sections and the improved prompt at the end.`,
             messages: [{ role: 'user', content }],
         };
 
+        // Direct browser mode — call Anthropic API without a backend proxy
+        if (state.directMode) {
+            return callAnthropicDirect(body);
+        }
+
+        // Backend proxy mode
         const response = await fetch(apiUrl('/api/messages'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -293,6 +338,33 @@ Format your analysis clearly with sections and the improved prompt at the end.`,
         if (!response.ok) {
             const err = await response.json().catch(() => ({}));
             throw new Error(err?.error?.message || `Server error ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.content?.[0]?.text || '';
+    }
+
+    // ── Direct Anthropic API call (browser → api.anthropic.com) ──
+    async function callAnthropicDirect(body) {
+        const apiKey = localStorage.getItem('reprompt_api_key');
+        if (!apiKey) {
+            throw new Error('No API key configured. Open Settings and enter your Anthropic API key.');
+        }
+
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01',
+                'anthropic-dangerous-direct-browser-access': 'true',
+            },
+            body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err?.error?.message || `Anthropic API error ${response.status}`);
         }
 
         const data = await response.json();
@@ -309,7 +381,7 @@ Format your analysis clearly with sections and the improved prompt at the end.`,
 
         if (!state.backendReady) {
             settingsModal.classList.remove('hidden');
-            checkBackend();
+            if (!state.directMode) checkBackend();
             return;
         }
 
