@@ -68,44 +68,33 @@ body {
 
 /* ── Header ─────────────────────────────── */
 .app-header {
-    padding: 52px 0 16px;
+    padding: 52px 0 20px;
     position: relative;
+    text-align: center;
 }
 
-.brand-block {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.brand-top {
-    display: flex;
-    align-items: baseline;
-    gap: 0;
-}
-
-.brand-vasey {
+.brand-presents {
     font-family: 'Space Mono', 'Courier New', monospace;
-    font-size: 1.1rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    color: var(--text-secondary);
-}
-
-.brand-slash {
-    font-family: 'Space Mono', 'Courier New', monospace;
-    font-size: 1.1rem;
+    font-size: 0.68rem;
     font-weight: 400;
-    color: var(--orange);
-    margin: 0 1px;
+    letter-spacing: 0.28em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 14px;
 }
 
-.brand-ai {
-    font-family: 'Space Mono', 'Courier New', monospace;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--orange);
-    letter-spacing: 0.08em;
+.brand-name-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.brand-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    flex-shrink: 0;
 }
 
 .brand-app-name {
@@ -124,16 +113,30 @@ body {
     color: var(--lavender);
 }
 
+.version-badge {
+    font-family: 'Space Mono', 'Courier New', monospace;
+    font-size: 0.62rem;
+    font-weight: 400;
+    color: var(--text-dim);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3px 8px;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+    align-self: center;
+}
+
 .header-tagline {
     font-size: 0.85rem;
     color: var(--text-dim);
-    margin-top: 6px;
+    margin-top: 10px;
     letter-spacing: 0.01em;
 }
 
 .settings-btn {
     position: absolute;
-    top: 56px;
+    top: 52px;
     right: 0;
     background: none;
     border: none;
@@ -695,6 +698,9 @@ body {
 @supports (padding-top: env(safe-area-inset-top)) {
     .app-header {
         padding-top: calc(52px + env(safe-area-inset-top));
+    }
+    .settings-btn {
+        top: calc(52px + env(safe-area-inset-top));
     }
     .app-footer {
         padding-bottom: calc(28px + env(safe-area-inset-bottom));
