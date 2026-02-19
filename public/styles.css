@@ -612,6 +612,28 @@ body {
     color: var(--lavender);
 }
 
+.setting-input {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    padding: 10px 12px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.setting-input:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(196, 181, 253, 0.12);
+}
+
+.setting-input::placeholder {
+    color: var(--text-dim);
+}
+
 .setting-select {
     width: 100%;
     background: var(--bg-input);
