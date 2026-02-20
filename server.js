@@ -1,6 +1,7 @@
 /* =========================================
    rePROMPT — VASEY/AI
    Backend proxy server for Anthropic API
+   Supports AI Gateway or direct API key.
    ========================================= */
 
 'use strict';
@@ -8,6 +9,7 @@
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
+const { resolveEndpoint } = require('./api/_resolve');
 
 loadLocalEnv();
 
@@ -51,16 +53,17 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ── Health check ─────────────────────────
 app.get('/api/health', (_req, res) => {
-    const hasKey = !!process.env.ANTHROPIC_API_KEY;
-    res.json({ status: 'ok', configured: hasKey });
+    const { mode } = resolveEndpoint();
+    res.json({ status: 'ok', configured: mode !== 'unconfigured' });
 });
 
 // ── Proxy: Anthropic Messages API ────────
 app.post('/api/messages', async (req, res) => {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
+    const { url, apiKey, mode } = resolveEndpoint();
+
+    if (mode === 'unconfigured') {
         return res.status(500).json({
-            error: { message: 'Server is not configured. Set the ANTHROPIC_API_KEY environment variable.' },
+            error: { message: 'Server is not configured. Set AI_GATEWAY_URL or ANTHROPIC_API_KEY.' },
         });
     }
 
@@ -77,13 +80,18 @@ app.post('/api/messages', async (req, res) => {
         : 1400;
 
     try {
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
+        const headers = {
+            'Content-Type': 'application/json',
+            'anthropic-version': '2023-06-01',
+        };
+
+        if (apiKey) {
+            headers['x-api-key'] = apiKey;
+        }
+
+        const response = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': apiKey,
-                'anthropic-version': '2023-06-01',
-            },
+            headers,
             body: JSON.stringify({ model, max_tokens: safeMaxTokens, system, messages }),
         });
 
@@ -96,7 +104,7 @@ app.post('/api/messages', async (req, res) => {
         res.json(data);
     } catch (_err) {
         res.status(502).json({
-            error: { message: 'Failed to reach Anthropic API. Check your network and API key.' },
+            error: { message: 'Failed to reach AI endpoint. Check your gateway URL or API key configuration.' },
         });
     }
 });
@@ -108,7 +116,12 @@ app.get('*', (_req, res) => {
 
 // ── Start ────────────────────────────────
 app.listen(PORT, () => {
-    const keyStatus = process.env.ANTHROPIC_API_KEY ? 'configured' : 'MISSING — set ANTHROPIC_API_KEY';
+    const { mode } = resolveEndpoint();
+    const modeLabel = {
+        gateway: `AI Gateway (${process.env.AI_GATEWAY_URL})`,
+        direct: 'Direct Anthropic API',
+        unconfigured: 'UNCONFIGURED — set AI_GATEWAY_URL or ANTHROPIC_API_KEY',
+    };
     console.log(`rePROMPT server running on http://localhost:${PORT}`);
-    console.log(`API key: ${keyStatus}`);
+    console.log(`Mode: ${modeLabel[mode]}`);
 });
