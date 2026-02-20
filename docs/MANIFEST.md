@@ -1,7 +1,8 @@
 # Repository Manifest
 
 ## Runtime
-- `server.js` — Express server, static hosting, and Anthropic proxy endpoint.
+- `server.js` — Express server, static hosting, Anthropic proxy endpoint, and API rate limiting.
+- `api/_security.js` — shared API request validation and security header utilities.
 - `public/` — static PWA frontend (HTML/CSS/JS, icons, manifest, service worker).
 
 ## CI/CD
