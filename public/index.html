@@ -155,12 +155,7 @@
                 <div class="setting-group">
                     <label class="setting-label">Backend Status</label>
                     <div class="backend-status" id="backendStatus">Checking...</div>
-                    <p class="setting-hint" id="backendHint">The API key is stored securely on the server. Set the <code>ANTHROPIC_API_KEY</code> environment variable to configure it.</p>
-                </div>
-                <div class="setting-group" id="apiKeyGroup" style="display:none;">
-                    <label class="setting-label" for="apiKeyInput">Anthropic API Key</label>
-                    <input type="password" id="apiKeyInput" class="setting-input" placeholder="sk-ant-..." autocomplete="off">
-                    <p class="setting-hint">Your key is stored in this browser only and sent directly to the Anthropic API. It is never sent to any other server.</p>
+                    <p class="setting-hint" id="backendHint">The API key is stored securely on the server. Set <code>ANTHROPIC_API_KEY</code> for direct mode, or <code>AI_GATEWAY_URL</code> + gateway credentials for gateway mode.</p>
                 </div>
                 <div class="setting-group">
                     <label class="setting-label" for="modelSelect">Model</label>

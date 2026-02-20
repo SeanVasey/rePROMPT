@@ -7,9 +7,14 @@
 ## CI/CD
 - `.github/workflows/ci.yml` — syntax/smoke validation and secret-pattern checks.
 - `.github/workflows/deploy.yml` — GitHub Pages deployment for static frontend.
+- `.github/workflows/vercel-deploy.yml` — optional Vercel deployment using repository secrets/API token.
 
 ## Governance & Security
 - `README.md` — setup, architecture, deployment notes.
 - `CHANGELOG.md` — versioned change history.
 - `SECURITY.md` — vulnerability reporting and secret-management policy.
 - `LICENSE` — Apache 2.0 licensing.
+
+
+## Operations
+- `docs/REPO_FLAGS.md` — recommended repository variables, secrets, and runtime deployment flags.
