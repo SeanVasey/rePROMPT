@@ -59,11 +59,11 @@ app.get('/api/health', (_req, res) => {
 
 // ── Proxy: Anthropic Messages API ────────
 app.post('/api/messages', async (req, res) => {
-    const { url, apiKey, mode } = resolveEndpoint();
+    const { url, apiKey, mode, authMode } = resolveEndpoint();
 
     if (mode === 'unconfigured') {
         return res.status(500).json({
-            error: { message: 'Server is not configured. Set AI_GATEWAY_URL or ANTHROPIC_API_KEY.' },
+            error: { message: 'Server is not configured. Set AI_GATEWAY_URL (plus gateway key) or ANTHROPIC_API_KEY.' },
         });
     }
 
@@ -86,7 +86,11 @@ app.post('/api/messages', async (req, res) => {
         };
 
         if (apiKey) {
-            headers['x-api-key'] = apiKey;
+            if (mode === 'gateway' && authMode === 'bearer') {
+                headers.Authorization = `Bearer ${apiKey}`;
+            } else {
+                headers['x-api-key'] = apiKey;
+            }
         }
 
         const response = await fetch(url, {

@@ -1,7 +1,7 @@
 {
   "name": "reprompt",
-  "version": "1.2.0",
-  "description": "rePROMPT — AI-powered prompt enhancement by VASEY/AI. Enhance, rewrite, and analyze prompts for better LLM results.",
+  "version": "1.3.0",
+  "description": "rePROMPT \u2014 AI-powered prompt enhancement by VASEY/AI. Enhance, rewrite, and analyze prompts for better LLM results.",
   "author": "VASEY/AI",
   "license": "Apache-2.0",
   "private": true,

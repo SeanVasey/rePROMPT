@@ -20,11 +20,11 @@ module.exports = async (req, res) => {
         return res.status(405).json({ error: { message: 'Method not allowed' } });
     }
 
-    const { url, apiKey, mode } = resolveEndpoint();
+    const { url, apiKey, mode, authMode } = resolveEndpoint();
 
     if (mode === 'unconfigured') {
         return res.status(500).json({
-            error: { message: 'Server is not configured. Set AI_GATEWAY_URL or ANTHROPIC_API_KEY.' },
+            error: { message: 'Server is not configured. Set AI_GATEWAY_URL (plus gateway key) or ANTHROPIC_API_KEY.' },
         });
     }
 
@@ -48,7 +48,11 @@ module.exports = async (req, res) => {
         };
 
         if (apiKey) {
-            headers['x-api-key'] = apiKey;
+            if (mode === 'gateway' && authMode === 'bearer') {
+                headers.Authorization = `Bearer ${apiKey}`;
+            } else {
+                headers['x-api-key'] = apiKey;
+            }
         }
 
         const response = await fetch(url, {

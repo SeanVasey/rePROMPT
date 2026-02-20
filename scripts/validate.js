@@ -28,6 +28,7 @@ const requiredFiles = [
   'api/health.js',
   'api/messages.js',
   'vercel.json',
+  'docs/REPO_FLAGS.md',
 ];
 requiredFiles.forEach(checkFile);
 
@@ -51,5 +52,17 @@ assert(resolveJs.includes('process.env.AI_GATEWAY_URL'), 'Resolve helper must re
 const envExample = read('.env.example');
 assert(envExample.includes('ANTHROPIC_API_KEY='), '.env.example must document ANTHROPIC_API_KEY.');
 assert(envExample.includes('AI_GATEWAY_URL'), '.env.example must document AI_GATEWAY_URL.');
+assert(envExample.includes('AI_GATEWAY_AUTH_MODE'), '.env.example must document AI_GATEWAY_AUTH_MODE.');
+
+
+const packageJson = JSON.parse(read('package.json'));
+const repoVersion = read('VERSION').trim();
+const changelog = read('CHANGELOG.md');
+
+assert(packageJson.version === repoVersion, `VERSION (${repoVersion}) must match package.json version (${packageJson.version}).`);
+assert(
+  changelog.includes(`## [${packageJson.version}]`),
+  `CHANGELOG.md must include an entry for version ${packageJson.version}.`
+);
 
 console.log('Validation checks passed.');

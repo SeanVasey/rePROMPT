@@ -4,6 +4,22 @@ All notable changes to **rePROMPT** will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] — 2026-02-20
+
+### Added
+
+- Added optional GitHub Actions workflow for Vercel deployments using API token-based authentication (`.github/workflows/vercel-deploy.yml`).
+- Added `docs/REPO_FLAGS.md` to document repository variables/secrets and runtime deployment flags.
+
+### Changed
+
+- Hardened AI endpoint resolution to support gateway base URLs, custom messages path, and gateway auth mode (`x-api-key` or `bearer`).
+- Updated Express and Vercel serverless proxy handlers to send bearer authentication when configured for gateway deployments.
+- Removed legacy browser-direct API key mode from the frontend to enforce server-side credential handling only.
+- Expanded `.env.example` to fully document Vercel AI Gateway-related variables and auth behavior.
+- Expanded validation script to enforce version consistency across `package.json`, `VERSION`, and `CHANGELOG.md`.
+- Updated documentation and manifest to reflect Vercel deployment path and operational configuration.
+
 ## [1.2.0] — 2026-02-19
 
 ### Added
