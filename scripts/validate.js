@@ -25,6 +25,7 @@ const requiredFiles = [
   'README.md',
   'SECURITY.md',
   'api/_resolve.js',
+  'api/_security.js',
   'api/health.js',
   'api/messages.js',
   'vercel.json',
@@ -35,6 +36,7 @@ requiredFiles.forEach(checkFile);
 execSync('node --check server.js', { stdio: 'inherit' });
 execSync('node --check public/app.js', { stdio: 'inherit' });
 execSync('node --check api/_resolve.js', { stdio: 'inherit' });
+execSync('node --check api/_security.js', { stdio: 'inherit' });
 execSync('node --check api/health.js', { stdio: 'inherit' });
 execSync('node --check api/messages.js', { stdio: 'inherit' });
 

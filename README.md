@@ -8,6 +8,7 @@ rePROMPT is a Claude-powered prompt enhancement web app by VASEY/AI. It ships as
 - Optional image attachments passed through the backend proxy.
 - PWA install support (manifest + service worker + icons).
 - Runtime backend health check in settings UI.
+- Proxy-side input validation, upstream timeouts, and API rate limiting defaults.
 - Configurable API base URL for static frontend hosting.
 - Flexible provider routing:
   - direct Anthropic API key mode
@@ -114,6 +115,8 @@ See `docs/REPO_FLAGS.md` for recommended repository variables/secrets and operat
 
 - Never commit `.env`.
 - Never place provider API keys in frontend code.
+- API handlers enforce strict payload validation, secure response headers, and outbound timeout controls.
+- Express runtime adds an IP-based rate limit for `/api/*` routes (60 requests/minute).
 - Use provider/platform secret stores for backend deployment.
 - See `SECURITY.md` for reporting policy.
 

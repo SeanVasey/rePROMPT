@@ -6,10 +6,10 @@
 'use strict';
 
 const { resolveEndpoint } = require('./_resolve');
+const { setSecurityHeaders } = require('./_security');
 
 module.exports = (_req, res) => {
     const { mode } = resolveEndpoint();
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('Referrer-Policy', 'no-referrer');
+    setSecurityHeaders(res);
     res.json({ status: 'ok', configured: mode !== 'unconfigured' });
 };

@@ -4,6 +4,16 @@ All notable changes to **rePROMPT** will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] — 2026-02-20
+
+### Changed
+
+- Hardened both Express and Vercel API handlers with strict request payload validation for `model` and `messages` structures.
+- Added shared security headers helper (`X-Frame-Options`, `Permissions-Policy`) and centralized API validation utility.
+- Added upstream fetch timeouts and explicit timeout error responses (`504`) to reduce hanging proxy requests.
+- Added lightweight API rate limiting (60 requests/minute per IP) for local/Express runtime.
+- Expanded repository validation checks to include the new shared security helper module.
+
 ## [1.3.0] — 2026-02-20
 
 ### Added
